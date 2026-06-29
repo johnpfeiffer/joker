@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { JokeResponseCard } from "../components/JokeResponseCard";
 import { useJokeChat } from "../controllers/useJokeChat";
-import { STATIC_PROMPT } from "../models/chat";
+import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
 export default function App() {
   const {

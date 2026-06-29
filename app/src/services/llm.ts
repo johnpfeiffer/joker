@@ -1,4 +1,5 @@
-import { buildJokePrompt, parseJokeResponse, type ChatResponse } from "../models/chat";
+import { parseJokeResponse, type ChatResponse } from "../models/chat";
+import { buildJokePrompt } from "../prompts/jokePrompt";
 
 export interface JokeClientConfig {
   baseUrl: string;

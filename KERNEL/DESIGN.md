@@ -49,3 +49,12 @@ Fonts: MUI defaults
 
 <https://github.com/google-labs-code/design.md>
 
+# Prompts
+
+- Context is scarce and precious
+- Summarize and distill: noise v signal, trends, patterns
+- Diverse canonical examples
+- Consistent structured formatting: positive separate from negative
+- User feedback is invaluable: multi-dimensional and long tail, implicit signals and revealed prefs 
+
+

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { STATIC_PROMPT, type ChatResponse } from "../models/chat";
+import { type ChatResponse } from "../models/chat";
+import { STATIC_PROMPT } from "../prompts/jokePrompt";
 import { CHAT_API_PATH, readAssistantMessage, readInteractionId, requestJoke } from "./llm";
 
 describe("llm service", () => {

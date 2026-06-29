@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  STATIC_PROMPT,
-  buildJokePrompt,
   createChatResponse,
   parseJokeResponse,
   parseStoredResponses,
@@ -9,6 +7,7 @@ import {
   truncateJokeResponse,
   type ChatResponse,
 } from "./chat";
+import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
 describe("chat model", () => {
   it("creates responses with optional feedback unset", () => {
@@ -44,27 +43,6 @@ describe("chat model", () => {
       ...response,
       rating: "thumbs-down",
     });
-  });
-
-  it("uses the fixed static prompt inside a JSON response contract", () => {
-    const prompt = buildJokePrompt([]);
-
-    expect(prompt).toContain(`User prompt: ${STATIC_PROMPT}`);
-    expect(prompt).toContain('Return JSON only with this shape: {"text":"your joke"}');
-    expect(prompt).not.toContain("Previous jokes and user feedback");
-  });
-
-  it("includes all previous jokes and feedback in later prompts", () => {
-    const prompt = buildJokePrompt([
-      makeResponse({ content: "First joke", rating: "thumbs-up" }),
-      makeResponse({ id: "response-2", content: "Second joke" }),
-    ]);
-
-    expect(prompt).toContain(STATIC_PROMPT);
-    expect(prompt).toContain('"joke":"First joke"');
-    expect(prompt).toContain('"feedback":"thumbs-up"');
-    expect(prompt).toContain('"joke":"Second joke"');
-    expect(prompt).toContain('"feedback":"unrated"');
   });
 
   it("parses direct, fenced, and embedded JSON joke responses", () => {

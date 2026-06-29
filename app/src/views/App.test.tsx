@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import App from "./App";
 import { STORAGE_KEY } from "../controllers/useJokeChat";
-import { STATIC_PROMPT } from "../models/chat";
+import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
 describe("Joker MVP", () => {
   beforeEach(() => {
