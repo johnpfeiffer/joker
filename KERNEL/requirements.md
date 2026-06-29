@@ -12,4 +12,3 @@ The browser should store each response and if the User provided feedback.
 
 Each further call to the LLM should include all of the previous jokes and the user feedback - this should inform the LLM prompt to give new (and better) jokes.
 
-For the LLM API, for development and local testing, just use 127.0.0.1:8080
