@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   createChatResponse,
+  movePriorityResponse,
+  orderResponsesByPriority,
   parseJokeResponse,
+  parseStoredPriorityOrder,
   parseStoredResponses,
   rateChatResponse,
   truncateJokeResponse,
@@ -136,6 +139,42 @@ describe("chat model", () => {
     expect(responses.map((response) => response.id)).toEqual(["valid", "valid-with-interaction"]);
     expect(responses[0].style).toEqual(["deadpan"]);
     expect(responses[0].subject).toEqual(["work"]);
+  });
+
+  it("sanitizes stored priority order", () => {
+    expect(parseStoredPriorityOrder('["second","first","second",3,null]')).toEqual([
+      "second",
+      "first",
+    ]);
+    expect(parseStoredPriorityOrder('{"bad":true}')).toEqual([]);
+    expect(parseStoredPriorityOrder(null)).toEqual([]);
+  });
+
+  it("orders responses by stored priority followed by chronological responses", () => {
+    const responses = [
+      makeResponse({ id: "first" }),
+      makeResponse({ id: "second" }),
+      makeResponse({ id: "third" }),
+    ];
+
+    expect(orderResponsesByPriority(responses, ["third", "missing"]).map(({ id }) => id)).toEqual([
+      "third",
+      "first",
+      "second",
+    ]);
+  });
+
+  it("moves a response priority without changing ratings", () => {
+    const responses = [
+      makeResponse({ id: "first", rating: "thumbs-up" }),
+      makeResponse({ id: "second" }),
+      makeResponse({ id: "third", rating: "thumbs-down" }),
+    ];
+
+    const priorityOrder = movePriorityResponse(responses, ["third"], "second", "first");
+
+    expect(priorityOrder).toEqual(["third", "second", "first"]);
+    expect(responses[1].rating).toBeUndefined();
   });
 });
 

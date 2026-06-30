@@ -154,6 +154,81 @@ export function parseStoredResponses(value: string | null): ChatResponse[] {
   }
 }
 
+export function parseStoredPriorityOrder(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const seen = new Set<string>();
+    return parsed.filter((id): id is string => {
+      if (typeof id !== "string" || !id.trim() || seen.has(id)) {
+        return false;
+      }
+
+      seen.add(id);
+      return true;
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function orderResponsesByPriority(
+  responses: ChatResponse[],
+  priorityOrder: string[],
+): ChatResponse[] {
+  const byId = new Map(responses.map((response) => [response.id, response]));
+  const ordered: ChatResponse[] = [];
+  const orderedIds = new Set<string>();
+
+  for (const id of priorityOrder) {
+    const response = byId.get(id);
+    if (response && !orderedIds.has(id)) {
+      ordered.push(response);
+      orderedIds.add(id);
+    }
+  }
+
+  for (const response of responses) {
+    if (!orderedIds.has(response.id)) {
+      ordered.push(response);
+    }
+  }
+
+  return ordered;
+}
+
+export function movePriorityResponse(
+  responses: ChatResponse[],
+  priorityOrder: string[],
+  draggedId: string,
+  targetId: string,
+): string[] {
+  if (draggedId === targetId) {
+    return orderResponsesByPriority(responses, priorityOrder).map((response) => response.id);
+  }
+
+  const orderedIds = orderResponsesByPriority(responses, priorityOrder).map(
+    (response) => response.id,
+  );
+  const sourceIndex = orderedIds.indexOf(draggedId);
+  const targetIndex = orderedIds.indexOf(targetId);
+  if (sourceIndex === -1 || targetIndex === -1) {
+    return orderedIds;
+  }
+
+  const next = [...orderedIds];
+  const [dragged] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, dragged);
+  return next;
+}
+
 function toChatResponse(value: unknown): ChatResponse | null {
   if (typeof value !== "object" || value === null) {
     return null;

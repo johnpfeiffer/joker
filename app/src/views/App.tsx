@@ -11,21 +11,45 @@ import {
   Paper,
   Stack,
   Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
 import { JokeResponseCard } from "../components/JokeResponseCard";
 import { useJokeChat } from "../controllers/useJokeChat";
 import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
+type JokeViewMode = "chronological" | "preference";
+
 export default function App() {
   const {
     responses,
+    priorityResponses,
     isLoading,
     error,
     nextPrompt,
     requestNextJoke,
     rateResponse,
+    moveResponsePriority,
   } = useJokeChat();
+  const [viewMode, setViewMode] = useState<JokeViewMode>("chronological");
+  const [draggedResponseId, setDraggedResponseId] = useState("");
+  const chronologicalResponses = [...responses].reverse();
+  const displayedResponses = viewMode === "preference" ? priorityResponses : chronologicalResponses;
+
+  function handleViewModeChange(_: unknown, nextViewMode: JokeViewMode | null) {
+    if (nextViewMode) {
+      setViewMode(nextViewMode);
+    }
+  }
+
+  function handleDrop(targetId: string) {
+    if (draggedResponseId) {
+      moveResponsePriority(draggedResponseId, targetId);
+    }
+    setDraggedResponseId("");
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", py: { xs: 2, md: 3 } }}>
@@ -103,6 +127,22 @@ export default function App() {
             </Paper>
 
             <Box component="main">
+              <Box sx={{ mb: 1.5 }}>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={viewMode}
+                  onChange={handleViewModeChange}
+                  aria-label="Joke view"
+                >
+                  <ToggleButton value="chronological" sx={viewToggleSx}>
+                    Chronological view
+                  </ToggleButton>
+                  <ToggleButton value="preference" sx={viewToggleSx}>
+                    Preference view
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
               {responses.length === 0 ? (
                 <Paper
                   variant="outlined"
@@ -120,11 +160,20 @@ export default function App() {
                 </Paper>
               ) : (
                 <Stack spacing={1.5}>
-                  {[...responses].reverse().map((response) => (
+                  {displayedResponses.map((response, index) => (
                     <JokeResponseCard
                       key={response.id}
                       response={response}
+                      draggable={viewMode === "preference"}
+                      priorityRank={viewMode === "preference" ? index + 1 : undefined}
                       onRate={(rating) => rateResponse(response.id, rating)}
+                      onDragStart={() => setDraggedResponseId(response.id)}
+                      onDragOver={(event) => {
+                        if (viewMode === "preference") {
+                          event.preventDefault();
+                        }
+                      }}
+                      onDrop={() => handleDrop(response.id)}
                     />
                   ))}
                 </Stack>
@@ -136,3 +185,15 @@ export default function App() {
     </Box>
   );
 }
+
+const viewToggleSx = {
+  textDecoration: "underline",
+  textUnderlineOffset: "3px",
+  "&.Mui-selected": {
+    bgcolor: "success.light",
+    color: "success.contrastText",
+    "&:hover": {
+      bgcolor: "success.main",
+    },
+  },
+};

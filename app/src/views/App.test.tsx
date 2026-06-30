@@ -1,9 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import App from "./App";
-import { STORAGE_KEY } from "../controllers/useJokeChat";
+import { PRIORITY_ORDER_STORAGE_KEY, STORAGE_KEY } from "../controllers/useJokeChat";
 import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
 describe("Joker MVP", () => {
@@ -129,6 +129,61 @@ describe("Joker MVP", () => {
     expect(screen.getByText("=(")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thumbs down" })).toBeDisabled();
   });
+
+  it("defaults to chronological view and toggles to preference view with priority ranks", () => {
+    seedResponses();
+
+    renderApp();
+
+    expect(screen.getByRole("button", { name: "Chronological view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByText("First stored.")).toBeInTheDocument();
+    expect(screen.getByText("Second stored.")).toBeInTheDocument();
+    expect(appearsBefore(screen.getByText("Second stored."), screen.getByText("First stored."))).toBe(
+      true,
+    );
+    expect(screen.queryByText("#1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Unrated")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Preference view" }));
+
+    expect(screen.getByRole("button", { name: "Preference view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByText("#1")).toBeInTheDocument();
+    expect(screen.getByText("#2")).toBeInTheDocument();
+  });
+
+  it("persists preference drag ordering and updates prompt inspection", async () => {
+    const user = userEvent.setup();
+    seedResponses();
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole("button", { name: "Preference view" }));
+    fireEvent.dragStart(screen.getByTestId("joke-card-second"));
+    fireEvent.dragOver(screen.getByTestId("joke-card-first"));
+    fireEvent.drop(screen.getByTestId("joke-card-first"));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(PRIORITY_ORDER_STORAGE_KEY)).toBe(
+        JSON.stringify(["second", "first"]),
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Prompt inspection" }));
+
+    const prompt = screen.getByText(/User priority ordered jokes/).textContent ?? "";
+    const priorityContext = prompt.slice(prompt.indexOf("User priority ordered jokes"));
+    expect(priorityContext.indexOf("Second stored.")).toBeLessThan(
+      priorityContext.indexOf("First stored."),
+    );
+    expect(prompt).toContain('"rating":null');
+    expect(prompt).toContain('"priorityRank":1');
+  });
 });
 
 function renderApp() {
@@ -138,4 +193,33 @@ function renderApp() {
       <App />
     </ThemeProvider>,
   );
+}
+
+function seedResponses() {
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify([
+      {
+        id: "first",
+        prompt: STATIC_PROMPT,
+        text: "First stored.",
+        style: ["deadpan"],
+        subject: ["work"],
+        createdAt: "2026-06-28T19:00:00.000Z",
+        rating: "thumbs-up",
+      },
+      {
+        id: "second",
+        prompt: STATIC_PROMPT,
+        text: "Second stored.",
+        style: ["wordplay"],
+        subject: ["language"],
+        createdAt: "2026-06-28T20:00:00.000Z",
+      },
+    ]),
+  );
+}
+
+function appearsBefore(first: HTMLElement, second: HTMLElement): boolean {
+  return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 }

@@ -15,6 +15,7 @@ describe("llm service", () => {
 
     const result = await requestJoke(
       [],
+      [],
       {
         baseUrl: "",
         path: CHAT_API_PATH,
@@ -55,6 +56,7 @@ describe("llm service", () => {
 
     await requestJoke(
       [makeResponse({ text: "Old joke", interactionId: "turn-1", rating: "thumbs-down" })],
+      [],
       {
         baseUrl: "https://example.com",
         path: CHAT_API_PATH,

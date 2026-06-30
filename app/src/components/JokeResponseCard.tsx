@@ -1,27 +1,58 @@
 import { Button, Card, CardActions, CardContent, Chip, Stack, Typography } from "@mui/material";
+import type { DragEventHandler } from "react";
 import type { ChatResponse, UserRating } from "../models/chat";
 
 interface JokeResponseCardProps {
   response: ChatResponse;
+  draggable?: boolean;
+  priorityRank?: number;
   onRate: (rating: UserRating) => void;
+  onDragStart?: DragEventHandler<HTMLElement>;
+  onDragOver?: DragEventHandler<HTMLElement>;
+  onDrop?: DragEventHandler<HTMLElement>;
 }
 
-export function JokeResponseCard({ response, onRate }: JokeResponseCardProps) {
+export function JokeResponseCard({
+  response,
+  draggable = false,
+  priorityRank,
+  onRate,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: JokeResponseCardProps) {
   const rated = Boolean(response.rating);
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 1 }}>
+    <Card
+      component="article"
+      variant="outlined"
+      draggable={draggable}
+      data-testid={`joke-card-${response.id}`}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      sx={{
+        borderRadius: 1,
+        cursor: draggable ? "grab" : "default",
+      }}
+    >
       <CardContent>
         <Stack spacing={1}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
             <Typography variant="caption" color="text.secondary">
               {formatCreatedAt(response.createdAt)}
             </Typography>
-            {response.rating ? (
-              <Chip size="small" label={ratingLabel(response.rating)} />
-            ) : (
-              <Chip size="small" label="Unrated" variant="outlined" />
-            )}
+            <Stack direction="row" alignItems="center" spacing={1}>
+              {priorityRank ? (
+                <Typography variant="caption" color="text.secondary">
+                  #{priorityRank}
+                </Typography>
+              ) : null}
+              {response.rating ? (
+                <Chip size="small" label={ratingLabel(response.rating)} />
+              ) : null}
+            </Stack>
           </Stack>
           <Typography sx={{ whiteSpace: "pre-wrap" }}>{response.text}</Typography>
         </Stack>

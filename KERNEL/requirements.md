@@ -52,3 +52,32 @@ Below the "get a new joke button" is an expandable section showing the next full
 
 Add a hover tooltip for the "prompt inspection" area: "Highest signal examples in the feedback loop get the early attention priority"
 
+
+## V3
+
+Clarification: Rating is the User Feedback. Separately, "Priority" has been the effective name for how examples are selected to be sent to the LLM.
+
+Rating and priority are separate signals. Dragging a joke does not change its thumbs-up, thumbs-down, or unrated status.
+
+Add a two-state view toggle above the created jokes:
+- Chronological view
+- Preference view
+
+Chronological view shows jokes in creation order. (the same as the app has before)
+
+Preference view shows jokes in effective prompt-priority order. Each joke card shows its effective prompt priority as a gray number on the right.
+- it defaults to the chronological view, and new jokes are just added to the end
+
+Users can drag and drop joke cards in preference view to set manual priority preferences. Manual priority is persisted in browser storage.
+
+Prompt example selection based on Rating remains capped at 12 jokes.
+
+Also send the User's top 12 priority-ordered jokes to the LLM as prompt context.
+
+- this results in some duplication - fine for now
+- this means the "priority-ordered" list will include Unrated jokes in the context
+
+Ensure the prompt is updated with this clear delineation of two separate lists.
+
+The prompt inspection preview must update immediately after priority changes.
+

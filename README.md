@@ -4,7 +4,7 @@ Remember how LLM chat worked in 2023...
 
 ## Goal
 
-Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, style tags, and subject tags. Later requests include the highest-signal rated examples: liked jokes first, disliked jokes second, newest to oldest, capped at 12 examples.
+Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, style tags, subject tags, and a separate persisted preference order. Later requests include two clearly labeled context lists: the highest-signal rated examples, capped at 12, and the user's top 12 priority-ordered jokes, which may include unrated jokes.
 
 ## Local Setup
 
@@ -26,6 +26,8 @@ The frontend sends:
 ```json
 {"message":"prompt text","previousInteractionId":"optional-prior-id"}
 ```
+
+The prompt preview and outbound request include separate sections for rating-selected context and priority-ordered context. Rating remains explicit user feedback; dragging jokes in preference view changes prompt priority only.
 
 The backend response should include `message` and may include `interactionId`. Joker stores the interaction id and echoes it on the next request. The prompt asks the model to return JSON only inside the backend `message` field:
 

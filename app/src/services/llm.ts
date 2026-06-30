@@ -21,10 +21,11 @@ export const jokeClientConfig: JokeClientConfig = {
 
 export async function requestJoke(
   history: ChatResponse[],
+  priorityOrder: string[] = [],
   config: JokeClientConfig = jokeClientConfig,
   fetcher: typeof fetch = fetch,
 ): Promise<JokeRequest> {
-  const prompt = buildJokePrompt(history);
+  const prompt = buildJokePrompt(history, priorityOrder);
   const previousInteractionId = latestInteractionId(history);
   const response = await fetcher(buildChatUrl(config), {
     method: "POST",

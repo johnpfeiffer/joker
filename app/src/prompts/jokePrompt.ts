@@ -1,4 +1,4 @@
-import type { ChatResponse } from "../models/chat";
+import { orderResponsesByPriority, type ChatResponse } from "../models/chat";
 
 export const STATIC_PROMPT = "tell me a new joke";
 export const MAX_JOKE_PARAGRAPHS = 3;
@@ -7,8 +7,9 @@ export const MAX_JOKE_SENTENCES = 12;
 const PROMPT_CHAR_LIMIT = 8_000;
 const PROMPT_HEADROOM = 400;
 const MAX_CONTEXT_JOKES = 12;
+const MAX_PRIORITY_JOKES = 12;
 
-export function buildJokePrompt(history: ChatResponse[]): string {
+export function buildJokePrompt(history: ChatResponse[], priorityOrder: string[] = []): string {
   const prefix = [
     "You are a concise joke assistant.",
     "The user prompt is fixed and cannot be edited.",
@@ -27,7 +28,7 @@ export function buildJokePrompt(history: ChatResponse[]): string {
     `User prompt: ${STATIC_PROMPT}`,
   ].join("\n");
 
-  const context = buildContext(history);
+  const context = buildContext(history, priorityOrder);
   if (context.length === 0) {
     return prefix;
   }
@@ -46,11 +47,15 @@ export function buildJokePrompt(history: ChatResponse[]): string {
   return `${prefix}\n${lines.join("\n")}`;
 }
 
-function buildContext(history: ChatResponse[]): string[] {
+function buildContext(history: ChatResponse[], priorityOrder: string[]): string[] {
   const liked = latestFirst(history, "thumbs-up");
   const disliked = latestFirst(history, "thumbs-down");
   const selected = [...liked, ...disliked].slice(0, MAX_CONTEXT_JOKES);
-  if (selected.length === 0) {
+  const prioritySelected = orderResponsesByPriority(history, priorityOrder).slice(
+    0,
+    MAX_PRIORITY_JOKES,
+  );
+  if (selected.length === 0 && prioritySelected.length === 0) {
     return [];
   }
 
@@ -66,6 +71,11 @@ function buildContext(history: ChatResponse[]): string[] {
   if (negative.length > 0) {
     lines.push("Negative rated jokes:");
     lines.push(...negative.map(serializeHistoryResponse));
+  }
+
+  if (prioritySelected.length > 0) {
+    lines.push("User priority ordered jokes:");
+    lines.push(...prioritySelected.map(serializePriorityResponse));
   }
 
   return lines;
@@ -84,6 +94,16 @@ function latestFirst(history: ChatResponse[], rating: "thumbs-up" | "thumbs-down
 
 function serializeHistoryResponse(response: ChatResponse): string {
   return JSON.stringify({
+    text: compactText(response.text),
+    style: response.style,
+    subject: response.subject,
+  });
+}
+
+function serializePriorityResponse(response: ChatResponse, index: number): string {
+  return JSON.stringify({
+    priorityRank: index + 1,
+    rating: response.rating ?? null,
     text: compactText(response.text),
     style: response.style,
     subject: response.subject,
