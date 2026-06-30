@@ -6,6 +6,7 @@ import {
   type ChatResponse,
   type UserRating,
 } from "../models/chat";
+import { buildJokePrompt } from "../prompts/jokePrompt";
 import { requestJoke } from "../services/llm";
 
 export const STORAGE_KEY = "joker.chatResponses.v1";
@@ -15,6 +16,7 @@ interface JokeChatState {
   isLoading: boolean;
   error: string;
   latestResponse?: ChatResponse;
+  nextPrompt: string;
   requestNextJoke: () => Promise<void>;
   rateResponse: (id: string, rating: UserRating) => void;
 }
@@ -30,6 +32,7 @@ export function useJokeChat(): JokeChatState {
     () => responses[responses.length - 1],
     [responses],
   );
+  const nextPrompt = useMemo(() => buildJokePrompt(responses), [responses]);
 
   useEffect(() => {
     getStorage()?.setItem(STORAGE_KEY, JSON.stringify(responses));
@@ -44,7 +47,9 @@ export function useJokeChat(): JokeChatState {
       const response = createChatResponse(
         {
           prompt: result.prompt,
-          content: result.joke,
+          text: result.joke.text,
+          style: result.joke.style,
+          subject: result.joke.subject,
           interactionId: result.interactionId,
         },
         new Date().toISOString(),
@@ -71,6 +76,7 @@ export function useJokeChat(): JokeChatState {
     isLoading,
     error,
     latestResponse,
+    nextPrompt,
     requestNextJoke,
     rateResponse,
   };

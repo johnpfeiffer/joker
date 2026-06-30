@@ -6,44 +6,87 @@ export const MAX_JOKE_SENTENCES = 12;
 
 const PROMPT_CHAR_LIMIT = 8_000;
 const PROMPT_HEADROOM = 400;
+const MAX_CONTEXT_JOKES = 12;
 
 export function buildJokePrompt(history: ChatResponse[]): string {
   const prefix = [
     "You are a concise joke assistant.",
     "The user prompt is fixed and cannot be edited.",
-    "Use prior jokes and feedback as context when present.",
+    "Use prior rated jokes and feedback as context when present.",
     "Do not repeat prior jokes.",
-    "If feedback is thumbs-up, lean toward that style. If feedback is thumbs-down, avoid that style.",
+    "Produce more jokes matching the style and subject tags of Positive rated jokes.",
+    "Avoid jokes matching the style and subject tags of Negative rated jokes.",
+    "When multiple thumbs-down jokes share a tag, strongly avoid that tag.",
     `Limit your answer to at most ${MAX_JOKE_PARAGRAPHS} paragraphs or ${MAX_JOKE_SENTENCES} sentences, whichever is less.`,
-    'Return JSON only with this shape: {"text":"your joke"}',
+    "Return JSON only with this shape:",
+    "{",
+    '  "text": "the joke",',
+    '  "style": ["one or two tags from: pun, wordplay, one-liner, setup-punchline, knock-knock, observational, absurdist, dark, deadpan, story"],',
+    '  "subject": ["one or two tags describing the topic, e.g. animals, technology, food, work, relationships, science, language"]',
+    "}",
     `User prompt: ${STATIC_PROMPT}`,
   ].join("\n");
 
-  if (history.length === 0) {
+  const context = buildContext(history);
+  if (context.length === 0) {
     return prefix;
   }
 
-  const suffix = "\nPrevious jokes and user feedback:";
   const maxLength = PROMPT_CHAR_LIMIT - PROMPT_HEADROOM;
   const lines: string[] = [];
 
-  for (const [index, response] of history.entries()) {
-    const line = serializeHistoryResponse(response, index);
-    const next = `${prefix}${suffix}\n${[...lines, line].join("\n")}`;
+  for (const line of context) {
+    const next = `${prefix}\n${[...lines, line].join("\n")}`;
     if (next.length > maxLength) {
       break;
     }
     lines.push(line);
   }
 
-  return `${prefix}${suffix}\n${lines.join("\n")}`;
+  return `${prefix}\n${lines.join("\n")}`;
 }
 
-function serializeHistoryResponse(response: ChatResponse, index: number): string {
+function buildContext(history: ChatResponse[]): string[] {
+  const liked = latestFirst(history, "thumbs-up");
+  const disliked = latestFirst(history, "thumbs-down");
+  const selected = [...liked, ...disliked].slice(0, MAX_CONTEXT_JOKES);
+  if (selected.length === 0) {
+    return [];
+  }
+
+  const lines: string[] = [];
+  const positive = selected.filter((response) => response.rating === "thumbs-up");
+  const negative = selected.filter((response) => response.rating === "thumbs-down");
+
+  if (positive.length > 0) {
+    lines.push("Positive rated jokes:");
+    lines.push(...positive.map(serializeHistoryResponse));
+  }
+
+  if (negative.length > 0) {
+    lines.push("Negative rated jokes:");
+    lines.push(...negative.map(serializeHistoryResponse));
+  }
+
+  return lines;
+}
+
+function latestFirst(history: ChatResponse[], rating: "thumbs-up" | "thumbs-down"): ChatResponse[] {
+  return history
+    .map((response, index) => ({ response, index }))
+    .filter(({ response }) => response.rating === rating)
+    .sort((left, right) => {
+      const byTime = Date.parse(right.response.createdAt) - Date.parse(left.response.createdAt);
+      return byTime || right.index - left.index;
+    })
+    .map(({ response }) => response);
+}
+
+function serializeHistoryResponse(response: ChatResponse): string {
   return JSON.stringify({
-    index: index + 1,
-    joke: compactText(response.content),
-    feedback: response.rating ?? "unrated",
+    text: compactText(response.text),
+    style: response.style,
+    subject: response.subject,
   });
 }
 

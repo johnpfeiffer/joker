@@ -1,10 +1,10 @@
 # joker
 
-Remember 2023.
+Remember how LLM chat worked in 2023...
 
 ## Goal
 
-Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, and later requests include the full stored history.
+Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, style tags, and subject tags. Later requests include the highest-signal rated examples: liked jokes first, disliked jokes second, newest to oldest, capped at 12 examples.
 
 ## Local Setup
 
@@ -15,7 +15,7 @@ cd app
 npm install
 ```
 
-The app expects the documented chat backend endpoint from `KERNEL/IMPORT/CHAT_API.md`:
+The app expects the chat backend endpoint required by `KERNEL/requirements.md`:
 
 ```text
 POST /links/chat
@@ -30,7 +30,11 @@ The frontend sends:
 The backend response should include `message` and may include `interactionId`. Joker stores the interaction id and echoes it on the next request. The prompt asks the model to return JSON only inside the backend `message` field:
 
 ```json
-{"text":"your joke"}
+{
+  "text": "the joke",
+  "style": ["one or two tags from: pun, wordplay, one-liner, setup-punchline, knock-knock, observational, absurdist, dark, deadpan, story"],
+  "subject": ["one or two tags describing the topic, e.g. animals, technology, food, work, relationships, science, language"]
+}
 ```
 
 Run the frontend:
@@ -40,7 +44,7 @@ cd app
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173/`.
+Open the local URL printed by Vite, usually `http://localhost:5173/`. If you need a fixed URL for local validation, run Vite with `--host 127.0.0.1 --port 8080` and open `http://localhost:8080/`.
 
 ## Configuration
 

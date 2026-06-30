@@ -14,7 +14,9 @@ describe("chat model", () => {
     const response = createChatResponse(
       {
         prompt: STATIC_PROMPT,
-        content: "  A tidy punchline.  ",
+        text: "  A tidy punchline.  ",
+        style: ["one-liner"],
+        subject: ["work"],
         interactionId: "turn-1",
       },
       "2026-06-28T19:00:00.000Z",
@@ -24,7 +26,9 @@ describe("chat model", () => {
     expect(response).toEqual({
       id: "response-1",
       prompt: STATIC_PROMPT,
-      content: "A tidy punchline.",
+      text: "A tidy punchline.",
+      style: ["one-liner"],
+      subject: ["work"],
       createdAt: "2026-06-28T19:00:00.000Z",
       interactionId: "turn-1",
     });
@@ -45,19 +49,45 @@ describe("chat model", () => {
     });
   });
 
+  it("refuses to create responses without style and subject tags", () => {
+    expect(() =>
+      createChatResponse(
+        {
+          prompt: STATIC_PROMPT,
+          text: "No tags.",
+          style: [],
+          subject: ["work"],
+        },
+        "2026-06-28T19:00:00.000Z",
+        "response-1",
+      ),
+    ).toThrow("style and subject tags");
+  });
+
   it("parses direct, fenced, and embedded JSON joke responses", () => {
-    expect(parseJokeResponse('{"text":"Direct joke."}')).toEqual({ text: "Direct joke." });
-    expect(parseJokeResponse('```json\n{"text":"Fenced joke."}\n```')).toEqual({
+    expect(
+      parseJokeResponse('{"text":"Direct joke.","style":["pun"],"subject":["food"]}'),
+    ).toEqual({ text: "Direct joke.", style: ["pun"], subject: ["food"] });
+    expect(
+      parseJokeResponse('```json\n{"text":"Fenced joke.","style":["deadpan"],"subject":["work"]}\n```'),
+    ).toEqual({
       text: "Fenced joke.",
+      style: ["deadpan"],
+      subject: ["work"],
     });
-    expect(parseJokeResponse('Sure: {"text":"Embedded joke."}')).toEqual({
+    expect(
+      parseJokeResponse('Sure: {"text":"Embedded joke.","style":["wordplay"],"subject":["language"]}'),
+    ).toEqual({
       text: "Embedded joke.",
+      style: ["wordplay"],
+      subject: ["language"],
     });
   });
 
   it("rejects non-JSON joke responses", () => {
     expect(parseJokeResponse("A free-form joke.")).toBeNull();
     expect(parseJokeResponse('{"message":"missing text"}')).toBeNull();
+    expect(parseJokeResponse('{"text":"missing tags"}')).toBeNull();
   });
 
   it("truncates long parsed responses", () => {
@@ -77,24 +107,35 @@ describe("chat model", () => {
         "Twelve.",
         "Thirteen.",
       ].join(" "),
+      style: ["story"],
+      subject: ["science"],
     });
 
     expect(response.text).not.toContain("Thirteen.");
   });
 
-  it("drops invalid local storage records", () => {
+  it("drops invalid local storage records and normalizes accepted tags", () => {
     const stored = JSON.stringify([
-      makeResponse({ id: "valid" }),
+      makeResponse({ id: "valid", style: [" Deadpan "], subject: [" Work "] }),
       makeResponse({ id: "valid-with-interaction", interactionId: "turn-1" }),
       { id: "bad", content: "missing fields" },
+      {
+        id: "legacy-v1",
+        prompt: STATIC_PROMPT,
+        content: "No tags.",
+        createdAt: "2026-06-28T19:00:00.000Z",
+      },
       makeResponse({ id: "invalid-rating", rating: "maybe" as never }),
       makeResponse({ id: "invalid-interaction", interactionId: 123 as never }),
+      makeResponse({ id: "invalid-style", style: [] }),
+      makeResponse({ id: "invalid-subject", subject: [] }),
     ]);
 
-    expect(parseStoredResponses(stored).map((response) => response.id)).toEqual([
-      "valid",
-      "valid-with-interaction",
-    ]);
+    const responses = parseStoredResponses(stored);
+
+    expect(responses.map((response) => response.id)).toEqual(["valid", "valid-with-interaction"]);
+    expect(responses[0].style).toEqual(["deadpan"]);
+    expect(responses[0].subject).toEqual(["work"]);
   });
 });
 
@@ -102,7 +143,9 @@ function makeResponse(overrides: Partial<ChatResponse> = {}): ChatResponse {
   return {
     id: "response-1",
     prompt: STATIC_PROMPT,
-    content: "Why did the test cross the road?",
+    text: "Why did the test cross the road?",
+    style: ["one-liner"],
+    subject: ["technology"],
     createdAt: "2026-06-28T19:00:00.000Z",
     ...overrides,
   };

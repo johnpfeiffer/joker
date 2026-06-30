@@ -1,4 +1,4 @@
-import { parseJokeResponse, type ChatResponse } from "../models/chat";
+import { parseJokeResponse, type ChatResponse, type ParsedJokeResponse } from "../models/chat";
 import { buildJokePrompt } from "../prompts/jokePrompt";
 
 export interface JokeClientConfig {
@@ -8,7 +8,7 @@ export interface JokeClientConfig {
 
 export interface JokeRequest {
   prompt: string;
-  joke: string;
+  joke: ParsedJokeResponse;
   interactionId?: string;
 }
 
@@ -45,13 +45,13 @@ export async function requestJoke(
   const rawMessage = readAssistantMessage(data);
   const parsed = parseJokeResponse(rawMessage);
   if (!parsed) {
-    throw new Error('LLM response did not include JSON joke text shaped as {"text":"..."}');
+    throw new Error('LLM response did not include JSON joke text shaped as {"text","style","subject"}');
   }
 
   const interactionId = readInteractionId(data);
   return {
     prompt,
-    joke: parsed.text,
+    joke: parsed,
     ...(interactionId ? { interactionId } : {}),
   };
 }

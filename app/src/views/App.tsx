@@ -1,5 +1,8 @@
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   CircularProgress,
@@ -7,6 +10,7 @@ import {
   Divider,
   Paper,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { JokeResponseCard } from "../components/JokeResponseCard";
@@ -18,6 +22,7 @@ export default function App() {
     responses,
     isLoading,
     error,
+    nextPrompt,
     requestNextJoke,
     rateResponse,
   } = useJokeChat();
@@ -27,8 +32,7 @@ export default function App() {
       <Container maxWidth="lg">
         <Stack spacing={2.5}>
           <Box>
-            <Typography variant="h1">Joker</Typography>
-            <Typography color="text.secondary">Remember 2023</Typography>
+            <Typography variant="h1">Remember how LLM chat worked in 2023...</Typography>
           </Box>
 
           <Box
@@ -51,7 +55,9 @@ export default function App() {
               <Stack spacing={2}>
                 <Box>
                   <Typography variant="h2">Prompt</Typography>
-                  <Typography sx={{ mt: 1 }}>{STATIC_PROMPT}</Typography>
+                  <Tooltip title="Early pattern of single User prompt, without multi-turn messages">
+                    <Typography sx={{ mt: 1, display: "inline-block" }}>{STATIC_PROMPT}</Typography>
+                  </Tooltip>
                 </Box>
                 <Divider />
                 <Box>
@@ -66,6 +72,32 @@ export default function App() {
                 >
                   {isLoading ? "Asking" : "Get new joke"}
                 </Button>
+                <Tooltip title="Highest signal examples in the feedback loop get the early attention priority">
+                  <Accordion variant="outlined" disableGutters sx={{ borderRadius: 1 }}>
+                    <AccordionSummary
+                      aria-label="Prompt inspection"
+                      expandIcon={<span aria-hidden="true">+</span>}
+                    >
+                      <Typography>Prompt inspection</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography
+                        component="pre"
+                        sx={{
+                          m: 0,
+                          maxHeight: 260,
+                          overflow: "auto",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          fontFamily: "monospace",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        {nextPrompt}
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                </Tooltip>
                 {error ? <Alert severity="error">{error}</Alert> : null}
               </Stack>
             </Paper>

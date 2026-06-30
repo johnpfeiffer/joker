@@ -23,7 +23,7 @@ export function JokeResponseCard({ response, onRate }: JokeResponseCardProps) {
               <Chip size="small" label="Unrated" variant="outlined" />
             )}
           </Stack>
-          <Typography sx={{ whiteSpace: "pre-wrap" }}>{response.content}</Typography>
+          <Typography sx={{ whiteSpace: "pre-wrap" }}>{response.text}</Typography>
         </Stack>
       </CardContent>
       <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
@@ -49,7 +49,7 @@ export function JokeResponseCard({ response, onRate }: JokeResponseCardProps) {
 }
 
 function ratingLabel(rating: UserRating): string {
-  return rating === "thumbs-up" ? "Thumbs up" : "Thumbs down";
+  return rating === "thumbs-up" ? "ツ" : "=(";
 }
 
 function formatCreatedAt(iso: string): string {

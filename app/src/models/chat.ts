@@ -6,7 +6,9 @@ export type UserRating = (typeof RATINGS)[number];
 export interface ChatResponse {
   id: string;
   prompt: string;
-  content: string;
+  text: string;
+  style: string[];
+  subject: string[];
   createdAt: string;
   interactionId?: string;
   rating?: UserRating;
@@ -14,12 +16,16 @@ export interface ChatResponse {
 
 export interface NewChatResponseInput {
   prompt: string;
-  content: string;
+  text: string;
+  style: string[];
+  subject: string[];
   interactionId?: string;
 }
 
 export interface ParsedJokeResponse {
   text: string;
+  style: string[];
+  subject: string[];
 }
 
 export function createChatResponse(
@@ -27,10 +33,18 @@ export function createChatResponse(
   nowIso: string,
   id: string,
 ): ChatResponse {
+  const style = readTagList(input.style);
+  const subject = readTagList(input.subject);
+  if (!style || !subject) {
+    throw new Error("Chat response requires style and subject tags");
+  }
+
   return {
     id,
     prompt: input.prompt,
-    content: input.content.trim(),
+    text: input.text.trim(),
+    style,
+    subject,
     createdAt: nowIso,
     ...(input.interactionId ? { interactionId: input.interactionId } : {}),
   };
@@ -51,17 +65,21 @@ export function rateChatResponse(
 }
 
 export function parseJokeResponse(rawMessage: string): ParsedJokeResponse | null {
-  const data = parseJsonCandidate(rawMessage) as { text?: unknown } | null;
+  const data = parseJsonCandidate(rawMessage) as
+    | { text?: unknown; style?: unknown; subject?: unknown }
+    | null;
   if (!data) {
     return null;
   }
 
   const text = typeof data.text === "string" ? data.text.trim() : "";
-  if (!text) {
+  const style = readTagList(data.style);
+  const subject = readTagList(data.subject);
+  if (!text || !style || !subject) {
     return null;
   }
 
-  return truncateJokeResponse({ text });
+  return truncateJokeResponse({ text, style, subject });
 }
 
 export function truncateJokeResponse(response: ParsedJokeResponse): ParsedJokeResponse {
@@ -76,7 +94,7 @@ export function truncateJokeResponse(response: ParsedJokeResponse): ParsedJokeRe
     text = sentences.slice(0, MAX_JOKE_SENTENCES).join("").trim();
   }
 
-  return { text };
+  return { ...response, text };
 }
 
 function compactText(value: string): string {
@@ -130,26 +148,59 @@ export function parseStoredResponses(value: string | null): ChatResponse[] {
       return [];
     }
 
-    return parsed.filter(isChatResponse);
+    return parsed.map(toChatResponse).filter((response): response is ChatResponse => Boolean(response));
   } catch {
     return [];
   }
 }
 
-function isChatResponse(value: unknown): value is ChatResponse {
+function toChatResponse(value: unknown): ChatResponse | null {
   if (typeof value !== "object" || value === null) {
-    return false;
+    return null;
   }
 
   const candidate = value as Record<string, unknown>;
   const rating = candidate.rating;
+  const style = readTagList(candidate.style);
+  const subject = readTagList(candidate.subject);
+  if (
+    typeof candidate.id !== "string" ||
+    typeof candidate.prompt !== "string" ||
+    typeof candidate.text !== "string" ||
+    !style ||
+    !subject ||
+    typeof candidate.createdAt !== "string" ||
+    (candidate.interactionId !== undefined && typeof candidate.interactionId !== "string") ||
+    (rating !== undefined && rating !== "thumbs-up" && rating !== "thumbs-down")
+  ) {
+    return null;
+  }
 
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.prompt === "string" &&
-    typeof candidate.content === "string" &&
-    typeof candidate.createdAt === "string" &&
-    (candidate.interactionId === undefined || typeof candidate.interactionId === "string") &&
-    (rating === undefined || rating === "thumbs-up" || rating === "thumbs-down")
-  );
+  return {
+    id: candidate.id,
+    prompt: candidate.prompt,
+    text: candidate.text,
+    style,
+    subject,
+    createdAt: candidate.createdAt,
+    ...(candidate.interactionId ? { interactionId: candidate.interactionId } : {}),
+    ...(rating ? { rating } : {}),
+  };
+}
+
+function readTagList(value: unknown): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const tags = normalizeTags(value);
+  return tags.length > 0 ? tags : null;
+}
+
+function normalizeTags(values: unknown[]): string[] {
+  return values
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => compactText(value).toLowerCase())
+    .filter(Boolean)
+    .slice(0, 2);
 }

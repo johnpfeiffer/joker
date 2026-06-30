@@ -8,7 +8,7 @@ describe("llm service", () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        message: '{"text":"A fresh joke."}',
+        message: '{"text":"A fresh joke.","style":["pun"],"subject":["food"]}',
         interactionId: "turn-1",
       }),
     });
@@ -35,7 +35,11 @@ describe("llm service", () => {
     });
     expect(result).toEqual({
       prompt: expect.stringContaining(STATIC_PROMPT),
-      joke: "A fresh joke.",
+      joke: {
+        text: "A fresh joke.",
+        style: ["pun"],
+        subject: ["food"],
+      },
       interactionId: "turn-1",
     });
   });
@@ -43,11 +47,14 @@ describe("llm service", () => {
   it("includes previous jokes, immutable feedback, and previous interaction id", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ message: '{"text":"Next joke."}', interactionId: "turn-2" }),
+      json: async () => ({
+        message: '{"text":"Next joke.","style":["deadpan"],"subject":["work"]}',
+        interactionId: "turn-2",
+      }),
     });
 
     await requestJoke(
-      [makeResponse({ content: "Old joke", interactionId: "turn-1", rating: "thumbs-down" })],
+      [makeResponse({ text: "Old joke", interactionId: "turn-1", rating: "thumbs-down" })],
       {
         baseUrl: "https://example.com",
         path: CHAT_API_PATH,
@@ -57,8 +64,8 @@ describe("llm service", () => {
 
     expect(fetcher.mock.calls[0][0]).toBe("https://example.com/links/chat");
     const body = JSON.parse(fetcher.mock.calls[0][1].body);
-    expect(body.message).toContain('"joke":"Old joke"');
-    expect(body.message).toContain('"feedback":"thumbs-down"');
+    expect(body.message).toContain('"text":"Old joke"');
+    expect(body.message).toContain("Negative rated jokes");
     expect(body.previousInteractionId).toBe("turn-1");
   });
 
@@ -81,7 +88,9 @@ function makeResponse(overrides: Partial<ChatResponse> = {}): ChatResponse {
   return {
     id: "response-1",
     prompt: STATIC_PROMPT,
-    content: "Old joke",
+    text: "Old joke",
+    style: ["deadpan"],
+    subject: ["work"],
     createdAt: "2026-06-28T19:00:00.000Z",
     ...overrides,
   };

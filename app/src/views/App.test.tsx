@@ -20,7 +20,7 @@ describe("Joker MVP", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        message: '{"text":"A stored joke."}',
+        message: '{"text":"A stored joke.","style":["pun"],"subject":["food"]}',
         interactionId: "turn-1",
       }),
     });
@@ -28,6 +28,7 @@ describe("Joker MVP", () => {
 
     renderApp();
 
+    expect(screen.getByText("Remember how LLM chat worked in 2023...")).toBeInTheDocument();
     expect(screen.getByText(STATIC_PROMPT)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Get new joke" }));
@@ -41,6 +42,7 @@ describe("Joker MVP", () => {
 
     await waitFor(() => {
       expect(window.localStorage.getItem(STORAGE_KEY)).toContain("A stored joke.");
+      expect(window.localStorage.getItem(STORAGE_KEY)).toContain("pun");
       expect(window.localStorage.getItem(STORAGE_KEY)).toContain("turn-1");
     });
   });
@@ -51,11 +53,17 @@ describe("Joker MVP", () => {
       .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ message: '{"text":"First joke."}', interactionId: "turn-1" }),
+        json: async () => ({
+          message: '{"text":"First joke.","style":["one-liner"],"subject":["science"]}',
+          interactionId: "turn-1",
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ message: '{"text":"Second joke."}', interactionId: "turn-2" }),
+        json: async () => ({
+          message: '{"text":"Second joke.","style":["wordplay"],"subject":["language"]}',
+          interactionId: "turn-2",
+        }),
       });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -66,6 +74,7 @@ describe("Joker MVP", () => {
 
     await user.click(screen.getByRole("button", { name: "Thumbs up" }));
 
+    expect(screen.getByText("ツ")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thumbs up" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Thumbs down" })).toBeDisabled();
 
@@ -77,9 +86,25 @@ describe("Joker MVP", () => {
     expect(await screen.findByText("Second joke.")).toBeInTheDocument();
 
     const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body);
-    expect(secondBody.message).toContain('"joke":"First joke."');
-    expect(secondBody.message).toContain('"feedback":"thumbs-up"');
+    expect(secondBody.message).toContain("Positive rated jokes");
+    expect(secondBody.message).toContain('"text":"First joke."');
+    expect(secondBody.message).toContain('"style":["one-liner"]');
     expect(secondBody.previousInteractionId).toBe("turn-1");
+  });
+
+  it("previews the next full prompt in an expandable inspection area", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Prompt inspection" }));
+
+    expect(
+      screen.getByLabelText(
+        "Highest signal examples in the feedback loop get the early attention priority",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Return JSON only with this shape/)).toBeInTheDocument();
+    expect(screen.getByText(/"style": \["one or two tags from:/)).toBeInTheDocument();
   });
 
   it("loads previous responses from local storage", () => {
@@ -89,7 +114,9 @@ describe("Joker MVP", () => {
         {
           id: "stored-response",
           prompt: STATIC_PROMPT,
-          content: "Already here.",
+          text: "Already here.",
+          style: ["deadpan"],
+          subject: ["work"],
           createdAt: "2026-06-28T19:00:00.000Z",
           rating: "thumbs-down",
         },
@@ -99,7 +126,7 @@ describe("Joker MVP", () => {
     renderApp();
 
     expect(screen.getByText("Already here.")).toBeInTheDocument();
-    expect(screen.getAllByText("Thumbs down").length).toBeGreaterThan(0);
+    expect(screen.getByText("=(")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thumbs down" })).toBeDisabled();
   });
 });
