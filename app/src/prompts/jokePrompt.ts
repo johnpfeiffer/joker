@@ -93,7 +93,7 @@ function latestFirst(history: ChatResponse[], rating: "thumbs-up" | "thumbs-down
 }
 
 function serializeHistoryResponse(response: ChatResponse): string {
-  return JSON.stringify({
+  return stringifyPromptJson({
     text: compactText(response.text),
     style: response.style,
     subject: response.subject,
@@ -101,13 +101,17 @@ function serializeHistoryResponse(response: ChatResponse): string {
 }
 
 function serializePriorityResponse(response: ChatResponse, index: number): string {
-  return JSON.stringify({
+  return stringifyPromptJson({
     priorityRank: index + 1,
     rating: response.rating ?? null,
     text: compactText(response.text),
     style: response.style,
     subject: response.subject,
   });
+}
+
+function stringifyPromptJson(value: unknown): string {
+  return JSON.stringify(value, null, 2);
 }
 
 function compactText(value: string): string {

@@ -66,7 +66,7 @@ describe("llm service", () => {
 
     expect(fetcher.mock.calls[0][0]).toBe("https://example.com/links/chat");
     const body = JSON.parse(fetcher.mock.calls[0][1].body);
-    expect(body.message).toContain('"text":"Old joke"');
+    expect(body.message).toContain('"text": "Old joke"');
     expect(body.message).toContain("Negative rated jokes");
     expect(body.previousInteractionId).toBe("turn-1");
   });

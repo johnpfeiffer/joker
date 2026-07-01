@@ -28,9 +28,9 @@ flowchart TD
   D --> E["Browser stores response, tags, and interactionId"]
   E --> L{"Choose view?"}
   L -->|"Chronological"| M["Show jokes newest first"]
-  L -->|"Preference"| N["Show effective prompt-priority order"]
+  L -->|"Preference"| N["Show effective prompt-priority order<br/>positive, unrated, negative"]
   N --> O["Drag jokes to persist priority order"]
-  O --> P["Prompt inspection updates immediately"]
+  O --> P["Prompt inspection updates immediately<br/>with full highlighted JSON"]
   M --> F{"Rate response?"}
   P --> F{"Rate response?"}
   F -->|"Thumbs up/down"| G["Store immutable feedback<br/>ツ or =("]
@@ -46,4 +46,4 @@ flowchart TD
 
 `INV-002` is implemented by required `ChatResponse.style` and `ChatResponse.subject` tag arrays. LLM responses and local storage records without non-empty tag arrays are rejected.
 
-V3 priority is implemented as a separate browser-persisted `priorityOrder` list. Dragging in preference view changes only the order used for priority context; it does not change `ChatResponse.rating`. The prompt builder emits rating-selected examples and priority-ordered examples as separate labeled sections.
+V3 priority is implemented as a separate browser-persisted `priorityOrder` list. Before manual ordering, preference view defaults to thumbs-up jokes, unrated jokes, then thumbs-down jokes, newest first within each group. Dragging in preference view changes only the order used for priority context; it does not change `ChatResponse.rating`. The prompt builder emits rating-selected examples and priority-ordered examples as separate labeled sections, using pretty-printed JSON for prompt inspection readability.

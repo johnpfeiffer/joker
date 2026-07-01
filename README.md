@@ -4,7 +4,7 @@ Remember how LLM chat worked in 2023...
 
 ## Goal
 
-Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, style tags, subject tags, and a separate persisted preference order. Later requests include two clearly labeled context lists: the highest-signal rated examples, capped at 12, and the user's top 12 priority-ordered jokes, which may include unrated jokes.
+Joker is a local React app that demonstrates feedback loops for chat. The user cannot change the prompt: each request starts from `tell me a new joke`. Responses are stored in the browser with optional immutable thumbs up or thumbs down feedback, style tags, subject tags, and a separate persisted preference order. Later requests include two clearly labeled context lists: the highest-signal rated examples, capped at 12, and the user's top 12 priority-ordered jokes, which may include unrated jokes. Preference view defaults to liked jokes first, then unrated jokes, then disliked jokes, newest first within each group.
 
 ## Local Setup
 
@@ -27,7 +27,7 @@ The frontend sends:
 {"message":"prompt text","previousInteractionId":"optional-prior-id"}
 ```
 
-The prompt preview and outbound request include separate sections for rating-selected context and priority-ordered context. Rating remains explicit user feedback; dragging jokes in preference view changes prompt priority only.
+The prompt preview and outbound request include separate sections for rating-selected context and priority-ordered context. Rating remains explicit user feedback; dragging jokes in preference view changes prompt priority only. Prompt inspection expands to show the full prompt with pretty-printed, highlighted JSON examples.
 
 The backend response should include `message` and may include `interactionId`. Joker stores the interaction id and echoes it on the next request. The prompt asks the model to return JSON only inside the backend `message` field:
 

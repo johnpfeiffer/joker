@@ -63,10 +63,11 @@ Add a two-state view toggle above the created jokes:
 - Chronological view
 - Preference view
 
-Chronological view shows jokes in creation order. (the same as the app has before)
+**Chronological view** shows jokes in reverse chronological order. (the same as the app has before)
 
-Preference view shows jokes in effective prompt-priority order. Each joke card shows its effective prompt priority as a gray number on the right.
-- it defaults to the chronological view, and new jokes are just added to the end
+**Preference view** shows jokes in effective prompt-priority order. Each joke card shows its effective prompt priority as a gray number on the right.
+- it defaults to all of the positive jokes first, then unrated, then negative - each sorted reverse chronological
+- new jokes are just added to the end
 
 Users can drag and drop joke cards in preference view to set manual priority preferences. Manual priority is persisted in browser storage.
 
@@ -80,4 +81,11 @@ Also send the User's top 12 priority-ordered jokes to the LLM as prompt context.
 Ensure the prompt is updated with this clear delineation of two separate lists.
 
 The prompt inspection preview must update immediately after priority changes.
+
+### Fixes
+
+Ensure that prompt inspection when it expands opens completely so it does not need a scroll bar
+
+Make it pretty print the JSON output with color highlighting
+
 

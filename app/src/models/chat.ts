@@ -183,6 +183,10 @@ export function orderResponsesByPriority(
   responses: ChatResponse[],
   priorityOrder: string[],
 ): ChatResponse[] {
+  if (priorityOrder.length === 0) {
+    return defaultPreferenceOrder(responses);
+  }
+
   const byId = new Map(responses.map((response) => [response.id, response]));
   const ordered: ChatResponse[] = [];
   const orderedIds = new Set<string>();
@@ -202,6 +206,17 @@ export function orderResponsesByPriority(
   }
 
   return ordered;
+}
+
+export function appendPriorityResponse(
+  responses: ChatResponse[],
+  priorityOrder: string[],
+  newResponseId: string,
+): string[] {
+  return [
+    ...orderResponsesByPriority(responses, priorityOrder).map((response) => response.id),
+    newResponseId,
+  ];
 }
 
 export function movePriorityResponse(
@@ -227,6 +242,28 @@ export function movePriorityResponse(
   const [dragged] = next.splice(sourceIndex, 1);
   next.splice(targetIndex, 0, dragged);
   return next;
+}
+
+function defaultPreferenceOrder(responses: ChatResponse[]): ChatResponse[] {
+  return [
+    ...latestFirst(responses, "thumbs-up"),
+    ...latestFirst(responses, undefined),
+    ...latestFirst(responses, "thumbs-down"),
+  ];
+}
+
+function latestFirst(
+  responses: ChatResponse[],
+  rating: UserRating | undefined,
+): ChatResponse[] {
+  return responses
+    .map((response, index) => ({ response, index }))
+    .filter(({ response }) => response.rating === rating)
+    .sort((left, right) => {
+      const byTime = Date.parse(right.response.createdAt) - Date.parse(left.response.createdAt);
+      return byTime || right.index - left.index;
+    })
+    .map(({ response }) => response);
 }
 
 function toChatResponse(value: unknown): ChatResponse | null {

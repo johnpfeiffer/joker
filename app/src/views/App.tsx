@@ -105,20 +105,7 @@ export default function App() {
                       <Typography>Prompt inspection</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <Typography
-                        component="pre"
-                        sx={{
-                          m: 0,
-                          maxHeight: 260,
-                          overflow: "auto",
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                          fontFamily: "monospace",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        {nextPrompt}
-                      </Typography>
+                      <PromptInspectionText prompt={nextPrompt} />
                     </AccordionDetails>
                   </Accordion>
                 </Tooltip>
@@ -184,6 +171,83 @@ export default function App() {
       </Container>
     </Box>
   );
+}
+
+function PromptInspectionText({ prompt }: { prompt: string }) {
+  const lines = prompt.split("\n");
+
+  return (
+    <Typography
+      component="pre"
+      data-testid="prompt-inspection-text"
+      sx={{
+        m: 0,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+        fontFamily: "monospace",
+        fontSize: "0.75rem",
+      }}
+    >
+      {lines.map((line, index) => (
+        <span key={`${index}-${line}`}>
+          {renderPromptLine(line)}
+          {index < lines.length - 1 ? "\n" : null}
+        </span>
+      ))}
+    </Typography>
+  );
+}
+
+function renderPromptLine(line: string) {
+  if (!isJsonLikeLine(line)) {
+    return line;
+  }
+
+  const tokens = line.match(/"[^"]*"|\b\d+\b|\bnull\b|[{}\[\]:,]|[^"{}\[\]:,\d]+|\d+/g) ?? [line];
+  return tokens.map((token, index) => {
+    if (/^"[^"]*"$/.test(token)) {
+      const nextToken = tokens[index + 1];
+      return (
+        <Box
+          key={`${index}-${token}`}
+          component="span"
+          sx={{ color: nextToken === ":" ? "primary.main" : "success.dark" }}
+        >
+          {token}
+        </Box>
+      );
+    }
+
+    if (/^\d+$/.test(token)) {
+      return (
+        <Box key={`${index}-${token}`} component="span" sx={{ color: "secondary.main" }}>
+          {token}
+        </Box>
+      );
+    }
+
+    if (token === "null") {
+      return (
+        <Box key={`${index}-${token}`} component="span" sx={{ color: "text.secondary" }}>
+          {token}
+        </Box>
+      );
+    }
+
+    if (/^[{}\[\]:,]$/.test(token)) {
+      return (
+        <Box key={`${index}-${token}`} component="span" sx={{ color: "text.secondary" }}>
+          {token}
+        </Box>
+      );
+    }
+
+    return token;
+  });
+}
+
+function isJsonLikeLine(line: string): boolean {
+  return /^[{}\[\]"]/.test(line.trim());
 }
 
 const viewToggleSx = {

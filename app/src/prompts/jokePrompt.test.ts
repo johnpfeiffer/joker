@@ -48,8 +48,10 @@ describe("joke prompt", () => {
     expect(ratingContext).not.toContain("Unrated joke");
     expect(prompt.indexOf("Liked new")).toBeLessThan(prompt.indexOf("Liked old"));
     expect(prompt.indexOf("Liked old")).toBeLessThan(prompt.indexOf("Disliked new"));
-    expect(prompt).toContain('"style":["one-liner"]');
-    expect(prompt).toContain('"subject":["technology"]');
+    expect(prompt).toContain('"style": [');
+    expect(prompt).toContain('"one-liner"');
+    expect(prompt).toContain('"subject": [');
+    expect(prompt).toContain('"technology"');
   });
 
   it("limits historical context to 12 rated jokes", () => {
@@ -67,8 +69,8 @@ describe("joke prompt", () => {
     const ratingContext = prompt.slice(0, prompt.indexOf("User priority ordered jokes"));
     expect(ratingContext).toContain("Rated joke 13");
     expect(ratingContext).toContain("Rated joke 2");
-    expect(ratingContext).not.toContain('"text":"Rated joke 1","style"');
-    expect(ratingContext).not.toContain('"text":"Rated joke 0","style"');
+    expect(ratingContext).not.toContain('"text": "Rated joke 1"');
+    expect(ratingContext).not.toContain('"text": "Rated joke 0"');
   });
 
   it("sends a separate top 12 priority-ordered list including unrated jokes", () => {
@@ -102,15 +104,15 @@ describe("joke prompt", () => {
       prompt.indexOf("Negative rated jokes"),
     );
     const priorityContext = prompt.slice(prompt.indexOf("User priority ordered jokes"));
-    expect(priorityContext.indexOf('"priorityRank":1')).toBeLessThan(
-      priorityContext.indexOf('"priorityRank":2'),
+    expect(priorityContext.indexOf('"priorityRank": 1')).toBeLessThan(
+      priorityContext.indexOf('"priorityRank": 2'),
     );
     expect(priorityContext.indexOf("Second chronological unrated")).toBeLessThan(
       priorityContext.indexOf("First chronological"),
     );
-    expect(prompt).toContain('"rating":null');
-    expect(prompt).toContain('"rating":"thumbs-up"');
-    expect(prompt).toContain('"rating":"thumbs-down"');
+    expect(prompt).toContain('"rating": null');
+    expect(prompt).toContain('"rating": "thumbs-up"');
+    expect(prompt).toContain('"rating": "thumbs-down"');
   });
 
   it("uses chronological order for unprioritized jokes and caps priority context at 12", () => {
@@ -127,8 +129,8 @@ describe("joke prompt", () => {
     expect(prompt).toContain("Priority joke 13");
     expect(prompt).toContain("Priority joke 0");
     expect(prompt).toContain("Priority joke 10");
-    expect(prompt).not.toContain('"text":"Priority joke 11","style"');
-    expect(prompt).not.toContain('"text":"Priority joke 12","style"');
+    expect(prompt).not.toContain('"text": "Priority joke 11"');
+    expect(prompt).not.toContain('"text": "Priority joke 12"');
   });
 });
 

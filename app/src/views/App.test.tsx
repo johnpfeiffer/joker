@@ -87,8 +87,8 @@ describe("Joker MVP", () => {
 
     const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body);
     expect(secondBody.message).toContain("Positive rated jokes");
-    expect(secondBody.message).toContain('"text":"First joke."');
-    expect(secondBody.message).toContain('"style":["one-liner"]');
+    expect(secondBody.message).toContain('"text": "First joke."');
+    expect(secondBody.message).toContain('"one-liner"');
     expect(secondBody.previousInteractionId).toBe("turn-1");
   });
 
@@ -103,8 +103,11 @@ describe("Joker MVP", () => {
         "Highest signal examples in the feedback loop get the early attention priority",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Return JSON only with this shape/)).toBeInTheDocument();
-    expect(screen.getByText(/"style": \["one or two tags from:/)).toBeInTheDocument();
+    const promptInspection = screen.getByTestId("prompt-inspection-text");
+    expect(promptInspection).toHaveTextContent("Return JSON only with this shape");
+    expect(promptInspection).toHaveTextContent('"style": ["one or two tags from:');
+    expect(promptInspection).not.toHaveStyle({ overflow: "auto" });
+    expect(promptInspection).not.toHaveStyle({ maxHeight: "260px" });
   });
 
   it("loads previous responses from local storage", () => {
@@ -176,13 +179,13 @@ describe("Joker MVP", () => {
 
     await user.click(screen.getByRole("button", { name: "Prompt inspection" }));
 
-    const prompt = screen.getByText(/User priority ordered jokes/).textContent ?? "";
+    const prompt = screen.getByTestId("prompt-inspection-text").textContent ?? "";
     const priorityContext = prompt.slice(prompt.indexOf("User priority ordered jokes"));
     expect(priorityContext.indexOf("Second stored.")).toBeLessThan(
       priorityContext.indexOf("First stored."),
     );
-    expect(prompt).toContain('"rating":null');
-    expect(prompt).toContain('"priorityRank":1');
+    expect(prompt).toContain('"rating": null');
+    expect(prompt).toContain('"priorityRank": 1');
   });
 });
 

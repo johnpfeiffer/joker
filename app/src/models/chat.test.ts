@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createChatResponse,
+  appendPriorityResponse,
   movePriorityResponse,
   orderResponsesByPriority,
   parseJokeResponse,
@@ -161,6 +162,60 @@ describe("chat model", () => {
       "third",
       "first",
       "second",
+    ]);
+  });
+
+  it("defaults preference priority to positive, unrated, then negative jokes newest first", () => {
+    const responses = [
+      makeResponse({
+        id: "old-positive",
+        rating: "thumbs-up",
+        createdAt: "2026-06-28T19:00:00.000Z",
+      }),
+      makeResponse({
+        id: "new-negative",
+        rating: "thumbs-down",
+        createdAt: "2026-06-28T23:00:00.000Z",
+      }),
+      makeResponse({
+        id: "old-unrated",
+        createdAt: "2026-06-28T20:00:00.000Z",
+      }),
+      makeResponse({
+        id: "new-positive",
+        rating: "thumbs-up",
+        createdAt: "2026-06-28T22:00:00.000Z",
+      }),
+      makeResponse({
+        id: "new-unrated",
+        createdAt: "2026-06-28T21:00:00.000Z",
+      }),
+    ];
+
+    expect(orderResponsesByPriority(responses, []).map(({ id }) => id)).toEqual([
+      "new-positive",
+      "old-positive",
+      "new-unrated",
+      "old-unrated",
+      "new-negative",
+    ]);
+  });
+
+  it("appends new responses to an existing preference order", () => {
+    const responses = [
+      makeResponse({ id: "first" }),
+      makeResponse({ id: "second" }),
+    ];
+
+    expect(appendPriorityResponse(responses, [], "third")).toEqual([
+      "second",
+      "first",
+      "third",
+    ]);
+    expect(appendPriorityResponse(responses, ["first", "second"], "third")).toEqual([
+      "first",
+      "second",
+      "third",
     ]);
   });
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  appendPriorityResponse,
   createChatResponse,
   movePriorityResponse,
   orderResponsesByPriority,
@@ -76,6 +77,7 @@ export function useJokeChat(): JokeChatState {
         createId(),
       );
       setResponses((current) => [...current, response]);
+      setPriorityOrder((current) => appendPriorityResponse(responses, current, response.id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Joke request failed");
     } finally {
