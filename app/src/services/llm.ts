@@ -12,7 +12,7 @@ export interface JokeRequest {
   interactionId?: string;
 }
 
-export const CHAT_API_PATH = "/links/chat";
+export const CHAT_API_PATH = "/ai/chat";
 
 export const jokeClientConfig: JokeClientConfig = {
   baseUrl: readEnvString("VITE_CHAT_API_BASE_URL", ""),
