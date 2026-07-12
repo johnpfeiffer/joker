@@ -26,6 +26,7 @@ interface JokeChatState {
   requestNextJoke: () => Promise<void>;
   rateResponse: (id: string, rating: UserRating) => void;
   moveResponsePriority: (draggedId: string, targetId: string) => void;
+  resetJokeHistory: () => void;
 }
 
 export function useJokeChat(): JokeChatState {
@@ -99,6 +100,12 @@ export function useJokeChat(): JokeChatState {
     );
   }
 
+  function resetJokeHistory() {
+    setResponses([]);
+    setPriorityOrder([]);
+    setError("");
+  }
+
   return {
     responses,
     isLoading,
@@ -109,6 +116,7 @@ export function useJokeChat(): JokeChatState {
     requestNextJoke,
     rateResponse,
     moveResponsePriority,
+    resetJokeHistory,
   };
 }
 

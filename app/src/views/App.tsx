@@ -8,6 +8,11 @@ import {
   CircularProgress,
   Container,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Paper,
   Stack,
   Tooltip,
@@ -32,9 +37,12 @@ export default function App() {
     requestNextJoke,
     rateResponse,
     moveResponsePriority,
+    resetJokeHistory,
   } = useJokeChat();
   const [viewMode, setViewMode] = useState<JokeViewMode>("chronological");
   const [draggedResponseId, setDraggedResponseId] = useState("");
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isPromptInspectionExpanded, setIsPromptInspectionExpanded] = useState(false);
   const chronologicalResponses = [...responses].reverse();
   const displayedResponses = viewMode === "preference" ? priorityResponses : chronologicalResponses;
 
@@ -51,12 +59,25 @@ export default function App() {
     setDraggedResponseId("");
   }
 
+  function handleResetConfirmation() {
+    resetJokeHistory();
+    setIsResetDialogOpen(false);
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", py: { xs: 2, md: 3 } }}>
       <Container maxWidth="lg">
         <Stack spacing={2.5}>
-          <Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
             <Typography variant="h1">Remember how LLM chat worked in 2023...</Typography>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => setIsResetDialogOpen(true)}
+              disabled={isLoading}
+            >
+              Reset
+            </Button>
           </Box>
 
           <Box
@@ -84,23 +105,29 @@ export default function App() {
                   </Tooltip>
                 </Box>
                 <Divider />
-                <Box>
-                  <Typography variant="h2">Responses</Typography>
-                  <Typography color="text.secondary">{responses.length}</Typography>
-                </Box>
                 <Button
                   variant="contained"
                   onClick={requestNextJoke}
                   disabled={isLoading}
                   startIcon={isLoading ? <CircularProgress color="inherit" size={16} /> : null}
                 >
-                  {isLoading ? "Asking" : "Get new joke"}
+                  {isLoading ? "Asking" : "Get a new joke"}
                 </Button>
-                <Tooltip title="Highest signal examples in the feedback loop get the early attention priority">
-                  <Accordion variant="outlined" disableGutters sx={{ borderRadius: 1 }}>
+                <Stack direction="row" alignItems="baseline" justifyContent="space-between">
+                  <Typography variant="h2">Responses</Typography>
+                  <Typography color="text.secondary">{responses.length}</Typography>
+                </Stack>
+                <Tooltip title="See how previous jokes, ratings, and rankings accumulate into the next prompt.">
+                  <Accordion
+                    variant="outlined"
+                    disableGutters
+                    expanded={isPromptInspectionExpanded}
+                    onChange={(_, expanded) => setIsPromptInspectionExpanded(expanded)}
+                    sx={{ borderRadius: 1 }}
+                  >
                     <AccordionSummary
                       aria-label="Prompt inspection"
-                      expandIcon={<span aria-hidden="true">+</span>}
+                      expandIcon={<span aria-hidden="true">{isPromptInspectionExpanded ? "−" : "+"}</span>}
                     >
                       <Typography>Prompt inspection</Typography>
                     </AccordionSummary>
@@ -126,9 +153,19 @@ export default function App() {
                     Chronological view
                   </ToggleButton>
                   <ToggleButton value="preference" sx={viewToggleSx}>
-                    Preference view
+                    Rankings
                   </ToggleButton>
                 </ToggleButtonGroup>
+                {viewMode === "preference" ? (
+                  <Typography
+                    variant="caption"
+                    component="p"
+                    color="text.secondary"
+                    sx={{ mt: 0.75, mb: 0, fontStyle: "italic" }}
+                  >
+                    Drag your favorite joke to the top.
+                  </Typography>
+                ) : null}
               </Box>
               {responses.length === 0 ? (
                 <Paper
@@ -169,6 +206,20 @@ export default function App() {
           </Box>
         </Stack>
       </Container>
+      <Dialog open={isResetDialogOpen} onClose={() => setIsResetDialogOpen(false)}>
+        <DialogTitle>Reset joke history?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This permanently clears all saved jokes, ratings, and preference ordering.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsResetDialogOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleResetConfirmation} autoFocus>
+            Reset
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -251,13 +302,11 @@ function isJsonLikeLine(line: string): boolean {
 }
 
 const viewToggleSx = {
-  textDecoration: "underline",
-  textUnderlineOffset: "3px",
   "&.Mui-selected": {
-    bgcolor: "success.light",
-    color: "success.contrastText",
+    bgcolor: "#e3f2fd",
+    color: "#0d47a1",
     "&:hover": {
-      bgcolor: "success.main",
+      bgcolor: "#bbdefb",
     },
   },
 };

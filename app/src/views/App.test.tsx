@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
@@ -31,7 +31,7 @@ describe("Joker MVP", () => {
     expect(screen.getByText("Remember how LLM chat worked in 2023...")).toBeInTheDocument();
     expect(screen.getByText(STATIC_PROMPT)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Get new joke" }));
+    await user.click(screen.getByRole("button", { name: "Get a new joke" }));
 
     expect(await screen.findByText("A stored joke.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe("Joker MVP", () => {
 
     renderApp();
 
-    await user.click(screen.getByRole("button", { name: "Get new joke" }));
+    await user.click(screen.getByRole("button", { name: "Get a new joke" }));
     expect(await screen.findByText("First joke.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Thumbs up" }));
@@ -82,7 +82,7 @@ describe("Joker MVP", () => {
       expect(window.localStorage.getItem(STORAGE_KEY)).toContain("thumbs-up");
     });
 
-    await user.click(screen.getByRole("button", { name: "Get new joke" }));
+    await user.click(screen.getByRole("button", { name: "Get a new joke" }));
     expect(await screen.findByText("Second joke.")).toBeInTheDocument();
 
     const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body);
@@ -100,7 +100,7 @@ describe("Joker MVP", () => {
 
     expect(
       screen.getByLabelText(
-        "Highest signal examples in the feedback loop get the early attention priority",
+        "See how previous jokes, ratings, and rankings accumulate into the next prompt.",
       ),
     ).toBeInTheDocument();
     const promptInspection = screen.getByTestId("prompt-inspection-text");
@@ -150,9 +150,9 @@ describe("Joker MVP", () => {
     expect(screen.queryByText("#1")).not.toBeInTheDocument();
     expect(screen.queryByText("Unrated")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Preference view" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rankings" }));
 
-    expect(screen.getByRole("button", { name: "Preference view" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Rankings" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -166,7 +166,7 @@ describe("Joker MVP", () => {
 
     renderApp();
 
-    fireEvent.click(screen.getByRole("button", { name: "Preference view" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rankings" }));
     fireEvent.dragStart(screen.getByTestId("joke-card-second"));
     fireEvent.dragOver(screen.getByTestId("joke-card-first"));
     fireEvent.drop(screen.getByTestId("joke-card-first"));
@@ -186,6 +186,64 @@ describe("Joker MVP", () => {
     );
     expect(prompt).toContain('"rating": null');
     expect(prompt).toContain('"priorityRank": 1');
+  });
+
+  it("confirms before clearing stored jokes and priority ordering", async () => {
+    const user = userEvent.setup();
+    seedResponses();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+
+    const resetDialog = screen.getByRole("dialog");
+    expect(resetDialog).toHaveTextContent("Reset joke history?");
+    expect(screen.getByText("First stored.")).toBeInTheDocument();
+
+    await user.click(within(resetDialog).getByRole("button", { name: "Reset" }));
+
+    expect(screen.getByText("No responses yet.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBe("[]");
+      expect(window.localStorage.getItem(PRIORITY_ORDER_STORAGE_KEY)).toBe("[]");
+    });
+  });
+
+  it("keeps history when reset confirmation is cancelled", async () => {
+    const user = userEvent.setup();
+    seedResponses();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByText("First stored.")).toBeInTheDocument();
+    expect(window.localStorage.getItem(STORAGE_KEY)).toContain("First stored.");
+  });
+
+  it("explains how to reorder jokes in preference view", () => {
+    seedResponses();
+
+    renderApp();
+
+    expect(screen.queryByText("Drag your favorite joke to the top.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Rankings" }));
+
+    expect(screen.getByText("Drag your favorite joke to the top.")).toHaveStyle({
+      fontStyle: "italic",
+    });
+  });
+
+  it("changes the prompt inspection indicator when expanded", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    const inspection = screen.getByRole("button", { name: "Prompt inspection" });
+    expect(inspection).toHaveTextContent("+");
+
+    await user.click(inspection);
+    expect(inspection).toHaveTextContent("−");
   });
 });
 
