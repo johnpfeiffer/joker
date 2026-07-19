@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { JokeResponseCard } from "../components/JokeResponseCard";
+import Footer from "../components/Footer";
 import { useJokeChat } from "../controllers/useJokeChat";
 import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
@@ -113,7 +114,7 @@ export default function App() {
                 >
                   {isLoading ? "Asking" : "Get a new joke"}
                 </Button>
-                <Stack direction="row" alignItems="baseline" justifyContent="space-between">
+                <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
                   <Typography variant="h2">Responses</Typography>
                   <Typography color="text.secondary">{responses.length}</Typography>
                 </Stack>
@@ -206,6 +207,7 @@ export default function App() {
           </Box>
         </Stack>
       </Container>
+      <Footer />
       <Dialog open={isResetDialogOpen} onClose={() => setIsResetDialogOpen(false)}>
         <DialogTitle>Reset joke history?</DialogTitle>
         <DialogContent>
