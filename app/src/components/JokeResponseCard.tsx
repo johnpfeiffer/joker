@@ -39,11 +39,11 @@ export function JokeResponseCard({
     >
       <CardContent>
         <Stack spacing={1}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
             <Typography variant="caption" color="text.secondary">
               {formatCreatedAt(response.createdAt)}
             </Typography>
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {priorityRank ? (
                 <Typography variant="caption" color="text.secondary">
                   #{priorityRank}

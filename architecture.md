@@ -5,6 +5,7 @@
 ```mermaid
 flowchart LR
   U["User"] --> V["React/MUI view"]
+  V --> FOOT["Footer<br/>built-by + LinkedIn/GitHub source links"]
   V --> C["useJokeChat controller"]
   C --> M["chat model"]
   C --> P["joke prompt builder"]
@@ -15,6 +16,8 @@ flowchart LR
   A --> G["Gemini provider"]
 ```
 
+The `Footer` component (`app/src/components/Footer.tsx`) is a pure presentational "Built by John Pfeiffer" line with LinkedIn and GitHub source-link icons (`@mui/icons-material`), rendered once in `App.tsx` below the main content; the GitHub link points at this repository. The UI runs on MUI v9 (upgraded from v7); `Stack` layout props (`alignItems`, `justifyContent`, `gap`) use `sx` per the v8/v9 removal of system props.
+
 The domain model in `app/src/models/chat.ts` owns response shape, JSON response parsing, truncation, tag validation, storage validation, feedback immutability, and deterministic priority ordering. The prompt builder in `app/src/prompts/jokePrompt.ts` owns the fixed prompt contract, structured response instructions, rated-history selection, priority-ordered context selection, and prompt inspection text. The controller in `app/src/controllers/useJokeChat.ts` handles browser persistence for responses and priority order, UI state, and next-prompt derivation. The service in `app/src/services/llm.ts` sends documented `/links/chat` requests shaped as `{message, previousInteractionId}` and accepts backend `message` output only when it can be parsed as structured joke JSON with `text`, `style`, and `subject`.
 
 ## User Journey
@@ -22,6 +25,7 @@ The domain model in `app/src/models/chat.ts` owns response shape, JSON response 
 ```mermaid
 flowchart TD
   A["Open Vite local dev URL"] --> B["See fixed prompt"]
+  A --> FOOT["Footer: built by John Pfeiffer + source links"]
   B --> K["Optionally expand prompt inspection"]
   K --> C["Request new joke"]
   C --> D["Chat backend returns text, style, subject, and interactionId"]
