@@ -64,7 +64,7 @@ describe("llm service", () => {
       fetcher,
     );
 
-    expect(fetcher.mock.calls[0][0]).toBe("https://example.com/links/chat");
+    expect(fetcher.mock.calls[0][0]).toBe("https://example.com/ai/chat");
     const body = JSON.parse(fetcher.mock.calls[0][1].body);
     expect(body.message).toContain('"text": "Old joke"');
     expect(body.message).toContain("Negative rated jokes");

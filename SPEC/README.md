@@ -5,7 +5,7 @@ This directory records AI-derived interpretation of `/KERNEL/`. Kernel files rem
 ## Requirements
 
 1. The app presents the static prompt `tell me a new joke`; users cannot edit it.
-2. The browser sends the prompt to the documented chat API at `/links/chat`.
+2. The browser sends the prompt to the documented chat API at `/ai/chat`.
 3. The frontend uses the standard Vite local development server.
 4. The browser stores every LLM response in `localStorage`.
 5. Each stored response has optional feedback traced to `INV-001`.

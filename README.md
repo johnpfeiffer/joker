@@ -8,17 +8,19 @@ Joker is a local React app that demonstrates feedback loops for chat. The user c
 
 ## Local Setup
 
-Install dependencies:
+Use Node.js **24.20.0** (pinned in `.nvmrc` and `app/package.json`). With nvm, run `nvm install` and `nvm use` from the repo root.
+
+Install the locked dependencies:
 
 ```bash
 cd app
-npm install
+npm ci
 ```
 
-The app expects the chat backend endpoint required by `KERNEL/requirements.md`:
+The app expects the chat backend endpoint:
 
 ```text
-POST /links/chat
+POST /ai/chat
 ```
 
 The frontend sends:
@@ -54,7 +56,7 @@ The defaults are:
 
 ```text
 VITE_CHAT_API_BASE_URL=
-VITE_CHAT_API_PATH=/links/chat
+VITE_CHAT_API_PATH=/ai/chat
 ```
 
 Leave `VITE_CHAT_API_BASE_URL` empty for same-origin production. Set it only when a local frontend is allowed to call a separately hosted chat backend.

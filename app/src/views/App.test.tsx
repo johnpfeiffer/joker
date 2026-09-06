@@ -37,7 +37,7 @@ describe("Joker MVP", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(fetchMock.mock.calls[0][0]).toBe("/links/chat");
+    expect(fetchMock.mock.calls[0][0]).toBe("/ai/chat");
     expect(body.message).toContain(`User prompt: ${STATIC_PROMPT}`);
 
     await waitFor(() => {
