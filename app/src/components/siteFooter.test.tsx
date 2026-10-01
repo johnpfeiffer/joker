@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import Footer from "./Footer";
+import { SiteFooter } from "johnutilsjs/ui";
 
-describe("Footer", () => {
-  it("renders the built-by line with LinkedIn and GitHub links", () => {
-    render(<Footer />);
+describe("SiteFooter (shared johnutilsjs footer)", () => {
+  it("renders the built-by line with LinkedIn and GitHub links to this repo", () => {
+    render(<SiteFooter repo="joker" />);
     expect(screen.getByText(/Built by John Pfeiffer/i)).toBeInTheDocument();
 
     const linkedin = screen.getByLabelText("John Pfeiffer on LinkedIn");
