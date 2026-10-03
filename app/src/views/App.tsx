@@ -22,7 +22,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { JokeResponseCard } from "../components/JokeResponseCard";
-import Footer from "../components/Footer";
+import { SiteFooter } from "johnutilsjs/ui";
 import { useJokeChat } from "../controllers/useJokeChat";
 import { STATIC_PROMPT } from "../prompts/jokePrompt";
 
@@ -207,7 +207,7 @@ export default function App() {
           </Box>
         </Stack>
       </Container>
-      <Footer />
+      <SiteFooter repo="joker" />
       <Dialog open={isResetDialogOpen} onClose={() => setIsResetDialogOpen(false)}>
         <DialogTitle>Reset joke history?</DialogTitle>
         <DialogContent>
